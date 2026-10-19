@@ -34,13 +34,15 @@ def is_prime(n, k = 20):
 def generate_poly(p, s, n, k):
     if not is_prime(p):
         raise ValueError("p mast be prime")
-    if not 0 <= s <= p:
+    if not 0 <= s < p:
         raise ValueError(f"secret must be in [0; {p-1}]")
-    if not 1 <= k <= p:
-        raise ValueError(f"k mast be in [1; {p}]")
-        
+    if not 1 <= k <= n:
+        raise ValueError(f"k mast be in [1; {n}]")
+    if n >= p:
+        raise ValueError(f"n must be less than p = {p}")    
+    
     coeffs = [s] + [secrets.randbelow(p) for _ in range(k - 1)]
-    if k > 1 and coeffs[-1] == 0:
+    while k > 1 and coeffs[-1] == 0:
         coeffs[-1] = secrets.randbelow(p) 
     return coeffs
  
@@ -50,9 +52,11 @@ def gorner(coeffs, x, p):
         in_point = (in_point*x + c) % p
     return in_point
         
-def gen_part_secret(n, coeffs, p):
+def gen_part_secret(n, s, p, k):
+    coeffs = generate_poly(p, s, n, k)
     return {i: gorner(coeffs, i, p) for i in range(1, n+1)}
     
+
 
 def recover_secret(shares, p): # через лагранжа
     
@@ -76,8 +80,8 @@ def recover_secret(shares, p): # через лагранжа
 if __name__ == "__main__":
 
     # пример из первой задачи
-    p = 127
-    known = {1: 85, 2: 71, 3: 81}
+    p = 127; s = 123; n = 3; k = 3
+    known = gen_part_secret(n, s, p, k)
     secret = recover_secret(known, p)
     print(f"доли: {known}")
     print(f"секрет a = f(0) = {secret}")
